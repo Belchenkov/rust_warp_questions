@@ -1,5 +1,8 @@
+use std::str::FromStr;
+use std::io::{Error, ErrorKind};
 use warp::Filter;
 
+#[derive(Debug)]
 struct Question {
     id: QuestionId,
     title: String,
@@ -7,6 +10,7 @@ struct Question {
     tags: Option<Vec<String>>,
 }
 
+#[derive(Debug)]
 struct QuestionId(String);
 
 impl Question {
@@ -23,14 +27,30 @@ impl Question {
             tags,
         }
     }
+
+    fn update_title(&self, new_title: String) -> Self {
+        Question::new(self.id, new_title, self.content, self.tags)
+    }
+}
+
+impl FromStr for QuestionId {
+    type Err = std::io::Error;
+
+    fn from_str(id: &str) -> Result<Self, Self::Err> {
+        match id.is_empty() {
+            false => Ok(QuestionId(id.to_string())),
+            true => Err(Error::new(ErrorKind::InvalidInput, "No id provided")),
+        }
+    }
 }
 
 #[tokio::main]
 async fn main() {
-    let hello = warp::get()
-        .map(|| format!("Hello, World!"));
-
-    warp::serve(hello)
-        .run(([127, 0, 0, 1], 1337))
-        .await;
+    let question = Question::new(
+        QuestionId::from_str("1").expect("No id provided"),
+        "First Question".to_string(),
+        "Content of question".to_string(),
+        Some(vec!("faq".to_string())),
+    );
+    println!("{:?}", question);
 }
