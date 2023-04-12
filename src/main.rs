@@ -28,10 +28,6 @@ impl Question {
             tags,
         }
     }
-
-    fn update_title(&self, new_title: String) -> Self {
-        Question::new(self.id, new_title, self.content, self.tags)
-    }
 }
 
 impl FromStr for QuestionId {
@@ -69,7 +65,7 @@ async fn get_questions() -> Result<impl warp::Reply, warp::Rejection> {
 }
 
 async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
-    if let Some(_InvalidId) = r.find() {
+    if let Some(InvalidId) = r.find() {
         Ok(warp::reply::with_status(
             "No valid ID presented",
             StatusCode::UNPROCESSABLE_ENTITY,
