@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::io::{Error, ErrorKind};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use warp::{
     Filter,
     reject::Reject,
@@ -12,6 +13,23 @@ use warp::{
     },
 };
 
+struct Store {
+    questions: HashMap<QuestionId, Question>,
+}
+
+impl Store {
+    fn new() -> Self {
+        Store {
+            questions: Self::init(),
+        }
+    }
+
+    fn init() -> HashMap<QuestionId, Question> {
+        let file = include_str!("../questions.json");
+        serde_json::from_str(file).expect("can't read questions.json")
+    }
+}
+
 #[derive(Debug, Serialize)]
 struct Question {
     id: QuestionId,
@@ -20,7 +38,7 @@ struct Question {
     tags: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, Clone, PartialEq, Eq, Hash)]
 struct QuestionId(String);
 
 impl Question {
