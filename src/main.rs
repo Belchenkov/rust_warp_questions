@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use warp::{
     Filter,
-    reject::Reject,
     Rejection, Reply,
     http::StatusCode,
     http::Method,
@@ -31,7 +30,7 @@ impl Store {
 
 // Adding the Clone trait which we use in the
 // get_questions function further down
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Question {
     id: QuestionId,
     title: String,
@@ -42,7 +41,19 @@ struct Question {
 #[derive(Deserialize, Debug, Serialize, Clone, PartialEq, Eq, Hash)]
 struct QuestionId(String);
 
-async fn get_questions(store: Store) -> Result<impl Reply, Rejection> {
+async fn get_questions(
+    params: HashMap<String, String>,
+    store: Store
+) -> Result<impl Reply, Rejection> {
+    let mut start = 0;
+
+    if let Some(n) = params.get("start") {
+        start =  n.parse::<usize>().expect("Could not parse start");
+    }
+
+    println!("{}", start);
+
+
     let res: Vec<Question> = store.questions.values().cloned().collect();
     Ok(warp::reply::json(&res))
 }
@@ -77,6 +88,7 @@ async fn main() {
     let get_items = warp::get()
         .and(warp::path("questions"))
         .and(warp::path::end())
+        .and(warp::query())
         .and(store_filter)
         .and_then(get_questions)
         .recover(return_error);
