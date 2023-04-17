@@ -9,6 +9,7 @@ use warp::{
     http::Method,
     reject::Reject,
     filters::{
+        body::BodyDeserializeError,
         cors::CorsForbidden,
     },
 };
@@ -58,7 +59,7 @@ impl std::fmt::Display for Error {
         match *self {
             Error::ParseError(ref err) => write!(f, "Cannot parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
-            Error::QuestionNotFound => write!(f, "Question not found"), }
+            Error::QuestionNotFound => write!(f, "Question not found"),
         }
     }
 }
@@ -142,6 +143,11 @@ async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
         Ok(warp::reply::with_status(
             error.to_string(),
             StatusCode::FORBIDDEN,
+        ))
+    } else if let Some(error) = r.find::<BodyDeserializeError>() {
+        Ok(warp::reply::with_status(
+            error.to_string(),
+            StatusCode::UNPROCESSABLE_ENTITY,
         ))
     } else {
         Ok(warp::reply::with_status(
