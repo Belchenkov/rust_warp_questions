@@ -17,7 +17,11 @@ pub async fn add_answer(
         question_id: QuestionId(params.get("questionId").unwrap().to_string()),
     };
 
-    store.answers.write().await.insert(answer.id.clone(), answer);
+    store
+        .answers
+        .write()
+        .await
+        .insert(answer.id.clone(), answer);
 
     Ok(warp::reply::with_status("Answer added", StatusCode::OK))
 }
